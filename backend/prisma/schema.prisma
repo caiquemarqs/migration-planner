@@ -1,0 +1,162 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// =======================
+// ENUMS
+// =======================
+
+enum Role {
+  USER
+  AFFILIATE
+  ADMIN
+}
+
+enum CostBand {
+  LOW
+  MID
+  HIGH
+}
+
+enum Category {
+  RENT
+  GROCERIES
+  TRANSPORT
+  HEALTH
+  UTILITIES
+  LEISURE
+}
+
+enum ChecklistStatus {
+  PENDING
+  IN_PROGRESS
+  DONE
+}
+
+enum Plan {
+  FREE
+  PRO
+  LIFETIME
+}
+
+enum Provider {
+  STRIPE
+  MP
+}
+
+enum SubStatus {
+  ACTIVE
+  CANCELED
+  PAST_DUE
+}
+
+// =======================
+// MODELS
+// =======================
+
+model User {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  password_hash String
+  role          Role           @default(USER)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  households    Household[]
+  scenarios     Scenario[]
+  subscriptions Subscription[]
+  affiliate     Affiliate?
+}
+
+model Household {
+  id       String @id @default(uuid())
+  userId   String
+  adults   Int    @default(1)
+  children Int    @default(0)
+
+  user     User   @relation(fields: [userId], references: [id])
+}
+
+model Scenario {
+  id            String         @id @default(uuid())
+  userId        String
+  originCountry String
+  destCountry   String
+  destCity      String
+  currency      String         @default("USD")
+  savingsBRL    Float          @default(0)
+  incomeBRL     Float          @default(0)
+  costBand      CostBand       @default(MID)
+  bufferPercent Float          @default(15)
+  createdAt     DateTime       @default(now())
+
+  user          User           @relation(fields: [userId], references: [id])
+  overrides     CostOverride[]
+  checklist     ChecklistItem[]
+}
+
+model CostBaseline {
+  id        String   @id @default(uuid())
+  country   String
+  city      String
+  category  Category
+  min       Float
+  avg       Float
+  max       Float
+  source    String?
+  updatedAt DateTime @updatedAt
+}
+
+model CostOverride {
+  id         String   @id @default(uuid())
+  scenarioId String
+  category   Category
+  value      Float
+  currency   String
+
+  scenario   Scenario @relation(fields: [scenarioId], references: [id])
+}
+
+model FxRate {
+  id     String   @id @default(uuid())
+  base   String
+  target String
+  rate   Float
+  asOf   DateTime
+  source String?
+}
+
+model ChecklistItem {
+  id         String          @id @default(uuid())
+  scenarioId String
+  title      String
+  dueDate    DateTime?
+  status     ChecklistStatus @default(PENDING)
+
+  scenario   Scenario        @relation(fields: [scenarioId], references: [id])
+}
+
+model Subscription {
+  id        String    @id @default(uuid())
+  userId    String
+  plan      Plan      @default(FREE)
+  provider  Provider?
+  status    SubStatus @default(ACTIVE)
+  startedAt DateTime  @default(now())
+  expiresAt DateTime?
+  extRef    String?
+
+  user      User      @relation(fields: [userId], references: [id])
+}
+
+model Affiliate {
+  id     String @id @default(uuid())
+  userId String @unique
+  code   String @unique
+
+  user   User   @relation(fields: [userId], references: [id])
+}
