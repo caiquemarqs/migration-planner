@@ -8,7 +8,9 @@ const fxRoutes = require('./fx.routes');
 const compareRoutes = require('./compare.routes');
 const checklistRoutes = require('./checklist.routes');
 const billingRoutes = require('./billing.routes');
-// const affiliatesRoutes = require('./affiliates.routes');
+const householdRoutes = require('./household.routes');
+const transactionsRoutes = require('./transactions.routes');
+const affiliatesRoutes = require('./affiliate.routes');
 
 const router = Router();
 
@@ -22,12 +24,15 @@ const express = require('express');
 router.use(express.json());
 
 router.use('/auth', authRoutes);
+router.use('/users', require('./users.routes'));
 router.use('/scenarios', scenariosRoutes);
 router.use('/col', colRoutes);
 router.use('/fx', fxRoutes);
 router.use('/compare', compareRoutes);
 router.use('/checklist', checklistRoutes);
+router.use('/household', householdRoutes);
+router.use('/transactions', transactionsRoutes);
+router.use('/affiliates', affiliatesRoutes);
 // router.use('/billing', billingRoutes);
-// router.use('/affiliates', affiliatesRoutes);
 
 module.exports = router;

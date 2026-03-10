@@ -4,6 +4,8 @@ const authService = require('../services/auth.service');
 const registerSchema = z.object({
     email: z.string().email(),
     password: z.string().min(6),
+    name: z.string().optional(),
+    cpf: z.string().optional(),
     role: z.enum(['USER', 'AFFILIATE', 'ADMIN']).optional(),
 });
 

@@ -30,5 +30,8 @@
     "stripe": "^20.4.0",
     "uuid": "^13.0.0",
     "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.5"
   }
 }

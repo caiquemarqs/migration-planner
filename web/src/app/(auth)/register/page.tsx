@@ -15,6 +15,7 @@ import { api } from '@/lib/api';
 
 const registerSchema = z.object({
     name: z.string().min(2, 'Nome deve ter no mínimo 2 caracteres'),
+    cpf: z.string().optional(),
     email: z.string().email('E-mail inválido'),
     password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
 });
@@ -38,11 +39,12 @@ export default function RegisterPage() {
         try {
             setErrorMsg('');
             const response = await api.post('/auth/register', {
+                name: data.name,
                 email: data.email,
+                cpf: data.cpf,
                 password: data.password,
             });
             const { user, token } = response.data.data;
-            // Also we need backend to accept Name or split it later. For now, we only need to pass email/pwd
             setCredentials(user, token);
             router.push('/dashboard');
         } catch (error: any) {
@@ -112,6 +114,19 @@ export default function RegisterPage() {
                                 {...register('name')}
                             />
                             {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
+                        </div>
+
+                        <div className="space-y-2">
+                            <label htmlFor="cpf" className="text-sm font-medium leading-none flex justify-between">
+                                CPF <span className="text-xs text-muted-foreground">(Opcional para maior rapidez)</span>
+                            </label>
+                            <Input
+                                id="cpf"
+                                type="text"
+                                placeholder="000.000.000-00"
+                                {...register('cpf')}
+                            />
+                            {errors.cpf && <p className="text-xs text-destructive">{errors.cpf.message}</p>}
                         </div>
 
                         <div className="space-y-2">

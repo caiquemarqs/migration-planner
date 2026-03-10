@@ -1,15 +1,25 @@
 import { create } from 'zustand';
 import Cookies from 'js-cookie';
 import { api } from '@/lib/api';
-import { User, AuthState } from '@/types/auth';
+import { User as AuthStoreUser, AuthState } from '@/types/auth';
 
-interface AuthStore extends AuthState {
+// Omit because we want to enforce extending the appMode here
+interface User extends AuthStoreUser {
+    appMode?: 'PLANNER' | 'RESIDENT';
+}
+
+interface AuthStore {
+    user: User | null;
+    token: string | null;
+    isAuthenticated: boolean;
+    isLoading: boolean;
     setCredentials: (user: User, token: string) => void;
     logout: () => void;
     fetchUser: () => Promise<void>;
+    toggleMode: (mode: 'PLANNER' | 'RESIDENT') => Promise<void>;
 }
 
-export const useAuthStore = create<AuthStore>((set) => ({
+export const useAuthStore = create<AuthStore>((set, get) => ({
     user: null,
     token: Cookies.get('token') || null,
     isAuthenticated: !!Cookies.get('token'),
@@ -44,4 +54,21 @@ export const useAuthStore = create<AuthStore>((set) => ({
             set({ user: null, token: null, isAuthenticated: false, isLoading: false });
         }
     },
+
+    toggleMode: async (mode) => {
+        const currentData = get().user;
+        if (!currentData) return;
+
+        // Optimistic update
+        set({ user: { ...currentData, appMode: mode } });
+
+        try {
+            await api.put('/users/mode', { appMode: mode });
+        } catch (error) {
+            console.error('Failed to save mode preference to server', error);
+            // Revert optimistic update
+            set({ user: currentData });
+        }
+    }
 }));
+
