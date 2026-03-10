@@ -45,7 +45,7 @@ export function Sidebar({
 
     return (
         <div className={`
-            fixed inset-y-0 left-0 z-50 flex h-full flex-col bg-card border-r border-border transition-all duration-300 ease-in-out
+            fixed inset-y-0 left-0 z-50 flex h-[100dvh] flex-col bg-card border-r border-border transition-all duration-300 ease-in-out
             ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'} 
             md:translate-x-0 
             ${isCollapsed ? 'md:w-20' : 'md:w-64'}

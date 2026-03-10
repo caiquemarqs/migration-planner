@@ -32,7 +32,7 @@ router.use('/compare', compareRoutes);
 router.use('/checklist', checklistRoutes);
 router.use('/household', householdRoutes);
 router.use('/transactions', transactionsRoutes);
-router.use('/affiliates', affiliatesRoutes);
+router.use('/affiliate', affiliatesRoutes);
 // router.use('/billing', billingRoutes);
 
 module.exports = router;

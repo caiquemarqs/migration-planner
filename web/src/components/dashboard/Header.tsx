@@ -36,7 +36,7 @@ export function Header({
             <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
                 <div className="flex flex-1 items-center justify-center sm:justify-start">
                     {/* Mode Switcher */}
-                    <div className="relative flex items-center bg-secondary/50 rounded-full p-1 border border-border w-[200px] sm:w-[240px]">
+                    <div className="relative flex items-center bg-secondary/50 rounded-full p-1 border border-border w-[170px] sm:w-[240px]">
                         <motion.div
                             className="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-brand-primary rounded-full"
                             layout
@@ -48,18 +48,18 @@ export function Header({
                             transition={{ type: "spring", stiffness: 400, damping: 30 }}
                         />
                         <button
-                            className={`relative py-1.5 text-xs sm:text-sm font-medium flex items-center gap-1 sm:gap-2 flex-1 justify-center transition-colors z-10 ${!isResident ? 'text-white' : 'text-muted-foreground hover:text-foreground'}`}
+                            className={`relative py-1.5 text-[10px] sm:text-sm font-medium flex items-center gap-1 sm:gap-2 flex-1 justify-center transition-colors z-10 ${!isResident ? 'text-white' : 'text-muted-foreground hover:text-foreground'}`}
                             onClick={() => toggleMode('PLANNER')}
                         >
-                            <Plane className="w-3 h-3 sm:w-4 sm:h-4" />
-                            Planejador
+                            <Plane className="w-3 h-3 sm:w-4 sm:h-4 shrink-0" />
+                            <span className="truncate">Planejador</span>
                         </button>
                         <button
-                            className={`relative py-1.5 text-xs sm:text-sm font-medium flex items-center gap-1 sm:gap-2 flex-1 justify-center transition-colors z-10 ${isResident ? 'text-white' : 'text-muted-foreground hover:text-foreground'}`}
+                            className={`relative py-1.5 text-[10px] sm:text-sm font-medium flex items-center gap-1 sm:gap-2 flex-1 justify-center transition-colors z-10 ${isResident ? 'text-white' : 'text-muted-foreground hover:text-foreground'}`}
                             onClick={() => toggleMode('RESIDENT')}
                         >
-                            <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
-                            Residente
+                            <MapPin className="w-3 h-3 sm:w-4 sm:h-4 shrink-0" />
+                            <span className="truncate">Residente</span>
                         </button>
                     </div>
                 </div>

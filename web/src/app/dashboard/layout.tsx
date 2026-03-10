@@ -37,7 +37,7 @@ export default function DashboardLayout({
     }
 
     return (
-        <div className="min-h-screen bg-background text-foreground">
+        <div className="h-screen w-full flex bg-background text-foreground overflow-hidden relative">
             {/* Overlay for mobile sidebar */}
             {isMobileOpen && (
                 <div
@@ -52,14 +52,20 @@ export default function DashboardLayout({
                 onToggleDesktop={() => setIsDesktopCollapsed(!isDesktopCollapsed)}
                 onCloseMobile={() => setIsMobileOpen(false)}
             />
-            <div className={`${isDesktopCollapsed ? 'md:pl-20' : 'md:pl-64'} flex flex-col min-h-screen transition-all duration-300`}>
+
+            {/* Main Content Area */}
+            <div
+                className={`flex-1 flex flex-col h-screen overflow-hidden transition-all duration-300 ${isDesktopCollapsed ? 'md:ml-20' : 'md:ml-64'
+                    }`}
+            >
                 <Header
                     isSidebarCollapsed={isDesktopCollapsed}
                     onToggleDesktop={() => setIsDesktopCollapsed(!isDesktopCollapsed)}
                     onToggleMobile={() => setIsMobileOpen(!isMobileOpen)}
                 />
-                <main className="flex-1 relative z-0">
-                    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+
+                <main className="flex-1 overflow-y-auto w-full relative z-0">
+                    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 pb-24 min-h-full">
                         <PageWrapper>{children}</PageWrapper>
                     </div>
                 </main>
