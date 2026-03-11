@@ -83,6 +83,7 @@ model Transaction { // NOVA TABELA: Para o controle mensal de gastos
   id          String   @id @default(uuid())
   description String
   amount      Float    // Valor real
+  currency    String   @default("BRL") // EUR, BRL, CAD
   type        String   // "INCOME" ou "EXPENSE"
   category    Category
   date        DateTime @default(now())

@@ -7,6 +7,7 @@ const addTransaction = async (userId, data) => {
             userId,
             description: data.description,
             amount: data.amount,
+            currency: data.currency || 'BRL',
             type: data.type,
             category: data.category,
             date: data.date ? new Date(data.date) : new Date(),

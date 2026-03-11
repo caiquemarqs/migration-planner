@@ -16,6 +16,7 @@ type Transaction = {
     id: string;
     description: string;
     amount: number;
+    currency: string;
     type: 'INCOME' | 'EXPENSE';
     category: string;
     date: string;
@@ -52,6 +53,7 @@ export default function FinancesPage() {
     const [isAdding, setIsAdding] = React.useState(false);
     const [desc, setDesc] = React.useState('');
     const [amount, setAmount] = React.useState('');
+    const [currency, setCurrency] = React.useState('BRL');
     const [type, setType] = React.useState<'INCOME' | 'EXPENSE'>('EXPENSE');
     const [category, setCategory] = React.useState('RENT');
     const [date, setDate] = React.useState(format(new Date(), 'yyyy-MM-dd'));
@@ -92,6 +94,7 @@ export default function FinancesPage() {
             await api.post('/transactions', {
                 description: desc,
                 amount: parseFloat(amount),
+                currency,
                 type,
                 category,
                 date: new Date(date).toISOString()
@@ -125,14 +128,20 @@ export default function FinancesPage() {
 
     const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
+    const formatCurrency = (value: number, curr: string = 'BRL') => {
+        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: curr }).format(value);
+    };
+
     // Progress Chart Data (Trip Goal)
-    const tripGoalAmount = scenario ? (scenario.savingsBRL * 1.5) : 0; // Estimated goal based on scenario limit
-    const currentSavings = scenario ? scenario.savingsBRL : 0;
-    const progressPercent = tripGoalAmount > 0 ? Math.min((currentSavings / tripGoalAmount) * 100, 100) : 0;
+    const tripGoalAmount = scenario ? (scenario.savingsBRL * 1.5) : 10000; // Expected goal or fallback
+    const currentSavings = summary ? summary.balance : 0; // Capacidade de poupança real do mês
+    // ou se quiser manter o amount atual de savings do user (ex: accumulated)
+    const accumulatedSavings = scenario ? scenario.savingsBRL : 0;
+    const progressPercent = tripGoalAmount > 0 ? Math.min((accumulatedSavings / tripGoalAmount) * 100, 100) : 0;
 
     const progressData = [
-        { name: 'Acumulado', value: currentSavings, fill: '#10b981' }, // brand-primary
-        { name: 'Restante', value: Math.max(tripGoalAmount - currentSavings, 0), fill: '#27272a' }
+        { name: 'Acumulado', value: accumulatedSavings, fill: '#10b981' }, 
+        { name: 'Restante', value: Math.max(tripGoalAmount - accumulatedSavings, 0), fill: '#f4f4f5' } // light gray to match clean aesthetics
     ];
 
     const renderMomIndicator = (value?: number, invert = false) => {
@@ -182,77 +191,86 @@ export default function FinancesPage() {
                 </div>
             ) : (
                 <>
-                    {/* KPIs */}
+                    {/* KPIs - Fincheck Aesthetic (Clean, Minimalist, White Cards w/ subtle borders) */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <Card className="border-brand-primary/20 bg-gradient-to-br from-brand-primary/10 to-transparent">
+                        <Card className="shadow-sm border-border bg-card">
                             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                                <CardTitle className="text-sm font-medium">Receitas</CardTitle>
-                                <div className="p-2 bg-brand-primary/20 rounded-lg"><TrendingUp className="h-4 w-4 text-brand-primary" /></div>
+                                <CardTitle className="text-sm font-medium text-muted-foreground">Entradas</CardTitle>
+                                <div className="p-1.5 bg-emerald-500/10 rounded-full"><TrendingUp className="h-4 w-4 text-emerald-500" /></div>
                             </CardHeader>
                             <CardContent>
                                 <div className="text-2xl font-bold text-foreground">
-                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(summary?.totalIncome || 0)}
+                                    {formatCurrency(summary?.totalIncome || 0, 'BRL')}
                                 </div>
                                 {renderMomIndicator(summary?.momIncome)}
                             </CardContent>
                         </Card>
 
-                        <Card className="border-destructive/20 bg-gradient-to-br from-destructive/10 to-transparent">
+                        <Card className="shadow-sm border-border bg-card">
                             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                                <CardTitle className="text-sm font-medium">Despesas</CardTitle>
-                                <div className="p-2 bg-destructive/20 rounded-lg"><TrendingDown className="h-4 w-4 text-destructive" /></div>
+                                <CardTitle className="text-sm font-medium text-muted-foreground">Saídas</CardTitle>
+                                <div className="p-1.5 bg-destructive/10 rounded-full"><TrendingDown className="h-4 w-4 text-destructive" /></div>
                             </CardHeader>
                             <CardContent>
                                 <div className="text-2xl font-bold text-foreground">
-                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(summary?.totalExpense || 0)}
+                                    {formatCurrency(summary?.totalExpense || 0, 'BRL')}
                                 </div>
                                 {renderMomIndicator(summary?.momExpense, true)}
                             </CardContent>
                         </Card>
 
-                        <Card className="border-brand-secondary/30 bg-gradient-to-br from-brand-secondary/20 to-transparent">
+                        <Card className={`shadow-sm border-border text-white ${(summary?.balance || 0) >= 0 ? 'bg-emerald-600' : 'bg-destructive'}`}>
                             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                                <CardTitle className="text-sm font-medium">Fluxo Mensal (Poupado)</CardTitle>
-                                <div className="p-2 bg-brand-secondary/20 rounded-lg"><DollarSign className="h-4 w-4 text-brand-secondary" /></div>
+                                <CardTitle className="text-sm font-medium text-emerald-50">Capacidade de Poupança</CardTitle>
+                                <div className="p-1.5 bg-white/20 rounded-full text-white"><DollarSign className="h-4 w-4" /></div>
                             </CardHeader>
                             <CardContent>
-                                <div className={`text-2xl font-bold ${(summary?.balance || 0) >= 0 ? 'text-brand-secondary' : 'text-destructive'}`}>
-                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(summary?.balance || 0)}
+                                <div className="text-2xl font-bold">
+                                    {formatCurrency(summary?.balance || 0, 'BRL')}
                                 </div>
-                                {renderMomIndicator(summary?.momBalance)}
+                                <div className="text-xs text-emerald-100 mt-1">
+                                    Foco principal da viagem
+                                </div>
                             </CardContent>
                         </Card>
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {/* Transaction List */}
-                        <Card className="flex flex-col lg:col-span-2">
-                            <CardHeader className="flex flex-row items-center justify-between">
+                        {/* Transaction List - Table Format (Fincheck style) */}
+                        <Card className="flex flex-col lg:col-span-2 shadow-sm border-border bg-card">
+                            <CardHeader className="flex flex-row items-center justify-between border-b pb-4">
                                 <div>
                                     <CardTitle>Últimas Transações</CardTitle>
-                                    <CardDescription>Movimentações diárias deste mês</CardDescription>
+                                    <CardDescription>Movimentações deste mês</CardDescription>
                                 </div>
-                                <Button size="sm" className="bg-brand-primary text-white hover:bg-brand-primary/90" onClick={() => setIsAdding(!isAdding)}>
-                                    <Plus className="h-4 w-4 mr-1" /> Nova Transação
+                                <Button size="sm" className="bg-emerald-600 text-white hover:bg-emerald-700" onClick={() => setIsAdding(!isAdding)}>
+                                    <Plus className="h-4 w-4 mr-1" /> Nova
                                 </Button>
                             </CardHeader>
-                            <CardContent className="flex-1 overflow-y-auto max-h-[450px] pr-2">
+                            <CardContent className="flex-1 p-0 overflow-hidden">
                                 {isAdding && (
-                                    <div className="bg-secondary/20 p-4 rounded-lg border border-border mb-4">
+                                    <div className="bg-muted/30 p-4 border-b border-border">
                                         <form onSubmit={handleAdd} className="space-y-3">
                                             <Input placeholder="Descrição (ex: Aluguel)" value={desc} onChange={e => setDesc(e.target.value)} required />
                                             <div className="flex gap-2">
-                                                <Input type="number" step="0.01" placeholder="Valor (R$)" value={amount} onChange={e => setAmount(e.target.value)} required />
-                                                <Input type="date" value={date} onChange={e => setDate(e.target.value)} required />
+                                                <Input type="number" step="0.01" placeholder="Valor" value={amount} onChange={e => setAmount(e.target.value)} required className="flex-[2]" />
+                                                <select className="flex h-10 w-full flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                                                    value={currency} onChange={(e) => setCurrency(e.target.value)}>
+                                                    <option value="BRL">BRL (R$)</option>
+                                                    <option value="EUR">EUR (€)</option>
+                                                    <option value="CAD">CAD (C$)</option>
+                                                    <option value="USD">USD ($)</option>
+                                                </select>
+                                                <Input type="date" value={date} onChange={e => setDate(e.target.value)} required className="flex-[2]" />
                                             </div>
                                             <div className="flex gap-2">
-                                                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background disabled:cursor-not-allowed disabled:opacity-50"
+                                                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
                                                     value={type} onChange={(e: any) => { setType(e.target.value); if (e.target.value === 'INCOME') setCategory('INCOME'); else setCategory('RENT'); }}>
                                                     <option value="EXPENSE">Despesa</option>
                                                     <option value="INCOME">Receita</option>
                                                 </select>
                                                 {type === 'EXPENSE' && (
-                                                    <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background disabled:cursor-not-allowed disabled:opacity-50"
+                                                    <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
                                                         value={category} onChange={e => setCategory(e.target.value)}>
                                                         {CATEGORIES.filter(c => c.id !== 'INCOME').map(c => (
                                                             <option key={c.id} value={c.id}>{c.label}</option>
@@ -262,40 +280,56 @@ export default function FinancesPage() {
                                             </div>
                                             <div className="flex gap-2 pt-2">
                                                 <Button type="button" variant="outline" className="flex-1" onClick={() => setIsAdding(false)}>Cancelar</Button>
-                                                <Button type="submit" className="flex-1 bg-brand-primary hover:bg-brand-primary/90 text-primary-foreground">Salvar</Button>
+                                                <Button type="submit" className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white">Salvar</Button>
                                             </div>
                                         </form>
                                     </div>
                                 )}
 
-                                <div className="space-y-3">
-                                    {transactions.length === 0 ? (
-                                        <div className="text-center text-muted-foreground py-8 text-sm">Nenhuma transação cadastrada neste mês.</div>
-                                    ) : (
-                                        transactions.map((t) => (
-                                            <div key={t.id} className="flex justify-between items-center p-4 rounded-xl border border-border/50 bg-secondary/10 hover:bg-secondary/40 transition-colors group">
-                                                <div className="flex items-center gap-3">
-                                                    <div className={`h-10 w-10 rounded-full flex items-center justify-center ${t.type === 'INCOME' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-destructive/10 text-destructive'}`}>
-                                                        {t.type === 'INCOME' ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
-                                                    </div>
-                                                    <div className="flex flex-col">
-                                                        <span className="font-semibold text-sm text-foreground">{t.description}</span>
-                                                        <span className="text-xs text-muted-foreground">
-                                                            {format(new Date(t.date), 'dd MMM yyyy', { locale: ptBR })} • {CATEGORIES.find(c => c.id === t.category)?.label}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center gap-3">
-                                                    <span className={`font-bold ${t.type === 'INCOME' ? 'text-emerald-500' : 'text-foreground'}`}>
-                                                        {t.type === 'INCOME' ? '+' : '-'}{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(t.amount)}
-                                                    </span>
-                                                    <button onClick={() => handleDelete(t.id)} className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))
-                                    )}
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm text-left">
+                                        <thead className="text-xs text-muted-foreground uppercase bg-muted/50 border-b">
+                                            <tr>
+                                                <th className="px-6 py-3 font-medium">Descrição</th>
+                                                <th className="px-6 py-3 font-medium hidden md:table-cell">Categoria</th>
+                                                <th className="px-6 py-3 font-medium hidden sm:table-cell">Data</th>
+                                                <th className="px-6 py-3 font-medium text-right">Valor</th>
+                                                <th className="px-4 py-3"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {transactions.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan={5} className="text-center text-muted-foreground py-8 text-sm">
+                                                        Nenhuma transação cadastrada.
+                                                    </td>
+                                                </tr>
+                                            ) : (
+                                                transactions.map((t) => (
+                                                    <tr key={t.id} className="bg-card border-b hover:bg-muted/30 transition-colors group">
+                                                        <td className="px-6 py-4 font-medium text-foreground flex items-center gap-2">
+                                                            <div className={`h-2 w-2 rounded-full ${t.type === 'INCOME' ? 'bg-emerald-500' : 'bg-destructive'}`} />
+                                                            {t.description}
+                                                        </td>
+                                                        <td className="px-6 py-4 hidden md:table-cell text-muted-foreground">
+                                                            {CATEGORIES.find(c => c.id === t.category)?.label}
+                                                        </td>
+                                                        <td className="px-6 py-4 hidden sm:table-cell text-muted-foreground">
+                                                            {format(new Date(t.date), 'dd/MM/yyyy')}
+                                                        </td>
+                                                        <td className={`px-6 py-4 text-right font-medium ${t.type === 'INCOME' ? 'text-emerald-500' : 'text-foreground'}`}>
+                                                            {t.type === 'INCOME' ? '+' : '-'}{formatCurrency(t.amount, t.currency || 'BRL')}
+                                                        </td>
+                                                        <td className="px-4 py-4 text-right">
+                                                            <button onClick={() => handleDelete(t.id)} className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            )}
+                                        </tbody>
+                                    </table>
                                 </div>
                             </CardContent>
                         </Card>
@@ -303,11 +337,11 @@ export default function FinancesPage() {
                         {/* Charts Area View */}
                         <div className="space-y-6">
                             {/* Trip Goal Circular Chart */}
-                            <Card>
+                            <Card className="shadow-sm border-border bg-card">
                                 <CardHeader className="pb-2">
                                     <div className="flex items-center gap-2">
-                                        <div className="p-2 bg-brand-primary/20 rounded-lg"><Target className="h-4 w-4 text-brand-primary" /></div>
-                                        <CardTitle className="text-base">Progresso da Viagem</CardTitle>
+                                        <div className="p-1.5 bg-emerald-500/10 rounded-lg"><Target className="h-4 w-4 text-emerald-500" /></div>
+                                        <CardTitle className="text-base text-muted-foreground">Progresso da Viagem</CardTitle>
                                     </div>
                                     <CardDescription>Sua meta acumulativa (Estimativa)</CardDescription>
                                 </CardHeader>
@@ -315,8 +349,8 @@ export default function FinancesPage() {
                                     <div className="h-48 w-full absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10">
                                         <span className="text-3xl font-bold text-foreground">{progressPercent.toFixed(1)}%</span>
                                         <span className="text-xs text-muted-foreground text-center px-4 mt-1">
-                                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(currentSavings)} /
-                                            <br />{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(tripGoalAmount)}
+                                            {formatCurrency(accumulatedSavings)} /
+                                            <br />{formatCurrency(tripGoalAmount)}
                                         </span>
                                     </div>
                                     <ResponsiveContainer width="100%" height={200}>
@@ -325,8 +359,8 @@ export default function FinancesPage() {
                                                 data={progressData}
                                                 cx="50%"
                                                 cy="50%"
-                                                innerRadius={60}
-                                                outerRadius={80}
+                                                innerRadius={65}
+                                                outerRadius={85}
                                                 startAngle={90}
                                                 endAngle={-270}
                                                 dataKey="value"
@@ -342,9 +376,9 @@ export default function FinancesPage() {
                             </Card>
 
                             {/* Expense Composition Bar Chart */}
-                            <Card>
+                            <Card className="shadow-sm border-border bg-card">
                                 <CardHeader className="pb-2">
-                                    <CardTitle className="text-base">Composição de Gastos</CardTitle>
+                                    <CardTitle className="text-base text-muted-foreground">Composição de Gastos</CardTitle>
                                     <CardDescription>Onde seu dinheiro está indo</CardDescription>
                                 </CardHeader>
                                 <CardContent className="min-h-[220px]">
@@ -354,10 +388,10 @@ export default function FinancesPage() {
                                                 <XAxis type="number" hide />
                                                 <YAxis dataKey="name" type="category" width={80} tick={{ fill: '#a1a1aa', fontSize: 12 }} axisLine={false} tickLine={false} />
                                                 <RTTooltip
-                                                    contentStyle={{ backgroundColor: '#09090b', borderColor: '#27272a', borderRadius: '8px' }}
-                                                    itemStyle={{ color: '#fafafa' }}
-                                                    cursor={{ fill: '#27272a', opacity: 0.4 }}
-                                                    formatter={(value: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)}
+                                                    contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e4e4e7', borderRadius: '8px', color: '#09090b', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}
+                                                    itemStyle={{ color: '#09090b' }}
+                                                    cursor={{ fill: '#f4f4f5' }}
+                                                    formatter={(value: number) => formatCurrency(value)}
                                                 />
                                                 <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={16}>
                                                     {pieData.map((entry, index) => (

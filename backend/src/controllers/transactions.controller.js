@@ -4,6 +4,7 @@ const { z } = require('zod');
 const addTransactionSchema = z.object({
     description: z.string(),
     amount: z.number().positive(),
+    currency: z.enum(['EUR', 'BRL', 'CAD']).optional().default('BRL'),
     type: z.enum(['INCOME', 'EXPENSE']),
     category: z.enum(['RENT', 'GROCERIES', 'TRANSPORT', 'HEALTH', 'UTILITIES', 'LEISURE', 'INCOME']),
     date: z.string().optional() // ISO string
